@@ -1,12 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { hash, compare } from 'bcryptjs';
-import { validateRegistration, validateNotice, validPassword } from '../lib/validation.mjs';
+import { validateBoardInput, validateNotice, validPassword } from '../lib/validation.mjs';
 
-test('회원가입 이메일 정규화와 bcrypt 72바이트 한도 검증', () => {
-  assert.deepEqual(validateRegistration({ name: ' 정은 ', email: ' TEST@Example.com ', password: 'secure123' }), { name: '정은', email: 'test@example.com', password: 'secure123' });
-  assert.equal(validateRegistration({ name: '정은', email: { $ne: null }, password: 'secure123' }), null);
-  assert.equal(validateRegistration({ name: '정은', email: 'bad', password: 'secure123' }), null);
+test('게시글 이름·비밀번호 검증과 bcrypt 72바이트 한도', () => {
+  const input = { title: ' 제목 ', content: ' 본문 ', category: '학습 기록', author: ' 정은 ', password: 'secure123' };
+  assert.deepEqual(validateBoardInput(input), { title: '제목', content: '본문', category: '학습 기록', author: '정은', password: 'secure123' });
+  for (const author of ['', ' ', 'a'.repeat(31), { $ne: null }]) assert.equal(validateBoardInput({ ...input, author }), null);
+  for (const password of ['', 'short', '가'.repeat(25), { $ne: null }]) assert.equal(validateBoardInput({ ...input, password }), null);
   assert.equal(validPassword('a'.repeat(72)), true);
   assert.equal(validPassword('a'.repeat(73)), false);
   assert.equal(validPassword('가'.repeat(25)), false);
